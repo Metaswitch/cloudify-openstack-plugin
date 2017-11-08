@@ -307,17 +307,6 @@ def create(nova_client, neutron_client, args, **kwargs):
     ctx.logger.debug(
         "server.create() server before transformations: {0}".format(server))
 
-    for key in 'block_device_mapping', 'block_device_mapping_v2':
-        if key in server:
-            # if there is a connected boot volume, don't require the `image`
-            # property.
-            # However, python-novaclient requires an `image` input anyway, and
-            # checks it for truthiness when deciding whether to pass it along
-            # to the API
-            if 'image' not in server:
-                server['image'] = ctx.node.properties.get('image')
-            break
-
     _handle_image_or_flavor(server, nova_client, 'image')
     _handle_image_or_flavor(server, nova_client, 'flavor')
 
@@ -961,7 +950,7 @@ def _validate_security_group_and_server_connection_status(
 
 
 def _handle_image_or_flavor(server, nova_client, prop_name):
-    ctx.logger.info("_handle_image_or_flavor")
+    ctx.logger.info("_handle_image_or_flavor: {0}".format(prop_name))
     if prop_name not in server and '{0}_name'.format(prop_name) not in server:
 
         ctx.logger.info("_handle_image_or_flavor: branch1")
