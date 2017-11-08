@@ -961,7 +961,11 @@ def _validate_security_group_and_server_connection_status(
 
 
 def _handle_image_or_flavor(server, nova_client, prop_name):
+    ctx.logger.info("_handle_image_or_flavor")
     if prop_name not in server and '{0}_name'.format(prop_name) not in server:
+
+        ctx.logger.info("_handle_image_or_flavor: branch1")
+
         # setting image or flavor - looking it up by name; if not found, then
         # the value is assumed to be the id
         server[prop_name] = ctx.node.properties[prop_name]
@@ -975,7 +979,7 @@ def _handle_image_or_flavor(server, nova_client, prop_name):
                 'property'.format(prop_name))
 
         if prop_name == 'image':
-            ctx.logger.info("before lookup {0}", server[prop_name])
+            ctx.logger.info("before lookup {0}".format(server[prop_name]))
 
         image_or_flavor = \
             nova_client.cosmo_get_if_exists(prop_name, name=server[prop_name])
@@ -983,9 +987,10 @@ def _handle_image_or_flavor(server, nova_client, prop_name):
             server[prop_name] = image_or_flavor.id
 
         if prop_name == 'image':
-            ctx.logger.info("after lookup {0}", server[prop_name])
+            ctx.logger.info("after lookup {0}".format(server[prop_name]))
 
     else:  # Deprecated sugar
+        ctx.logger.info("_handle_image_or_flavor: branch2")
         if '{0}_name'.format(prop_name) in server:
             prop_name_plural = nova_client.cosmo_plural(prop_name)
             server[prop_name] = \
