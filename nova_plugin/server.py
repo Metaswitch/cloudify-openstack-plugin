@@ -206,6 +206,8 @@ def _get_volume_relationships(type_name, ctx):
             if rel.target.instance.runtime_properties.get(
                 OPENSTACK_TYPE_PROPERTY) == type_name]
 
+    ctx.logger.info('CNS: {0}, {1}'.format(str(boot_volume), str(other_volumes)))
+
     return boot_volume, other_volumes
 
 
