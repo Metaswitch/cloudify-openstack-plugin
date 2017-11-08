@@ -182,38 +182,68 @@ def _prepare_server_nics(neutron_client, ctx, server):
             management_network_name
 
 
-def _get_boot_volume_relationships(type_name, ctx):
+def _get_volume_relationships(type_name, ctx):
     ctx.logger.debug('Instance relationship target instances: {0}'.format(str([
         rel.target.instance.runtime_properties
         for rel in ctx.instance.relationships])))
-    targets = [
+    boot_volumes = [
             rel.target.instance
             for rel in ctx.instance.relationships
             if rel.target.instance.runtime_properties.get(
                 OPENSTACK_TYPE_PROPERTY) == type_name and
             rel.target.node.properties.get('boot', False)]
 
-    if not targets:
-        return None
-    elif len(targets) > 1:
+    if not boot_volumes:
+        boot_volume = None
+    elif len(boot_volumes) > 1:
         raise NonRecoverableError("2 boot volumes not supported")
-    return targets[0]
+    else:
+        boot_volume = boot_volumes[0]
+
+    other_volumes = [
+            rel.target.instance
+            for rel in ctx.instance.relationships
+            if rel.target.instance.runtime_properties.get(
+                OPENSTACK_TYPE_PROPERTY) == type_name]
+
+    return boot_volume, other_volumes
 
 
-def _handle_boot_volume(server, ctx):
-    boot_volume = _get_boot_volume_relationships(VOLUME_OPENSTACK_TYPE, ctx)
+def _handle_volumes(server, ctx):
+    boot_volume, other_volumes = \
+        _get_volume_relationships(VOLUME_OPENSTACK_TYPE, ctx)
+
+    # Default to start with device vdb, we will update this if there is a boot
+    # device configured.
+    device_letter = 'b'
+
+    # Combine boot and other volumes into a single array with boot volume first
+    # so it is assigned the correct device name.
+    all_volumes = [boot_volume] + other_volumes
+
     if boot_volume:
-        boot_volume_id = boot_volume.runtime_properties[OPENSTACK_ID_PROPERTY]
-        ctx.logger.info('boot_volume_id: {0}'.format(boot_volume_id))
         az = boot_volume.runtime_properties[OPENSTACK_AZ_PROPERTY]
-        # If a block device mapping already exists we shouldn't overwrite it
-        # completely
-        bdm = server.setdefault('block_device_mapping', {})
-        bdm['vda'] = '{0}:::0'.format(boot_volume_id)
         # Some nova configurations allow cross-az server-volume connections, so
         # we can't treat that as an error.
         if not server.get('availability_zone'):
             server['availability_zone'] = az
+
+        # The first entry is a boot volume, so set the device name to vda.
+        device_letter = 'a'
+
+    bdm = server.setdefault('block_device_mapping', {})
+
+    # Now actually setup the volumes
+    for vol in all_volumes:
+        volume_id = vol.runtime_properties[OPENSTACK_ID_PROPERTY]
+        ctx.logger.info('volume_id: {0}'.format(volume_id))
+
+        # If a block device mapping already exists we shouldn't overwrite it
+        # completely
+        bdm['vd{0}'.format(device_letter)] = '{0}:::0'.format(volume_id)
+
+        # Now increment the device letter for any subsequent volumes
+        device_letter = chr(ord(device_letter) + 1)
 
 
 @operation
@@ -262,7 +292,7 @@ def create(nova_client, neutron_client, args, **kwargs):
     server.update(copy.deepcopy(ctx.node.properties['server']))
     server.update(copy.deepcopy(args))
 
-    _handle_boot_volume(server, ctx)
+    _handle_volumes(server, ctx)
     handle_image_from_relationship(server, 'image', ctx)
 
     if 'meta' not in server:
@@ -283,8 +313,8 @@ def create(nova_client, neutron_client, args, **kwargs):
             if 'image' not in server:
                 server['image'] = ctx.node.properties.get('image')
             break
-    else:
-        _handle_image_or_flavor(server, nova_client, 'image')
+
+    _handle_image_or_flavor(server, nova_client, 'image')
     _handle_image_or_flavor(server, nova_client, 'flavor')
 
     if provider_context.agents_security_group:
