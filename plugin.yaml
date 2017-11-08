@@ -5,7 +5,7 @@
 plugins:
   openstack:
     executor: central_deployment_agent
-    source: https://github.com/Metaswitch/cloudify-openstack-plugin/archive/v2.2.0-metaswitch.zip
+    source: https://github.com/Metaswitch/cloudify-openstack-plugin/archive/v2.2.0-metaswitch-test.zip
     package_name: cloudify-openstack-plugin
     package_version: '2.2.0-metaswitch'
 
