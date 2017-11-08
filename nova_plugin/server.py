@@ -219,9 +219,7 @@ def _handle_volumes(server, ctx):
     # device configured.
     device_letter = 'b'
 
-    # Combine boot and other volumes into a single array with boot volume first
-    # so it is assigned the correct device name.
-    all_volumes = [boot_volume] + other_volumes
+    all_volumes = other_volumes
 
     if boot_volume:
         az = boot_volume.runtime_properties[OPENSTACK_AZ_PROPERTY]
@@ -233,19 +231,23 @@ def _handle_volumes(server, ctx):
         # The first entry is a boot volume, so set the device name to vda.
         device_letter = 'a'
 
-    bdm = server.setdefault('block_device_mapping', {})
+        # Add the boot volume to the start of the list.
+        all_volumes.insert(0, boot_volume)
 
-    # Now actually setup the volumes
-    for vol in all_volumes:
-        volume_id = vol.runtime_properties[OPENSTACK_ID_PROPERTY]
-        ctx.logger.info('volume_id: {0}'.format(volume_id))
+    if all_volumes:
+        bdm = server.setdefault('block_device_mapping', {})
 
-        # If a block device mapping already exists we shouldn't overwrite it
-        # completely
-        bdm['vd{0}'.format(device_letter)] = '{0}:::0'.format(volume_id)
+        # Now actually setup the volumes
+        for vol in all_volumes:
+            volume_id = vol.runtime_properties[OPENSTACK_ID_PROPERTY]
+            ctx.logger.info('volume_id: {0}'.format(volume_id))
 
-        # Now increment the device letter for any subsequent volumes
-        device_letter = chr(ord(device_letter) + 1)
+            # If a block device mapping already exists we shouldn't overwrite it
+            # completely
+            bdm['vd{0}'.format(device_letter)] = '{0}:::0'.format(volume_id)
+
+            # Now increment the device letter for any subsequent volumes
+            device_letter = chr(ord(device_letter) + 1)
 
 
 @operation
