@@ -19,9 +19,9 @@ from setuptools import setup
 setup(
     zip_safe=True,
     name='cloudify-openstack-plugin',
-    version='2.2.0-metaswitch-1',
-    author='idanmo',
-    author_email='idan@gigaspaces.com',
+    version='2.2.0-1',
+    author='metaswitch',
+    author_email='metaswitch',
     packages=[
         'openstack_plugin_common',
         'nova_plugin',

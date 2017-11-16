@@ -7,7 +7,7 @@ plugins:
     executor: central_deployment_agent
     source: https://github.com/Metaswitch/cloudify-openstack-plugin/archive/v2.2.0-metaswitch-1.zip
     package_name: cloudify-openstack-plugin
-    package_version: '2.2.0-metaswitch-1'
+    package_version: '2.2.0-1'
 
 node_types:
   cloudify.openstack.nodes.Server:
