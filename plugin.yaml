@@ -253,25 +253,6 @@ node_types:
             resource_id:
               type: string
               default: { get_property: [ SELF, resource_id ] }
-      # suspend/resume
-      cloudify.interfaces.freeze:
-        suspend:
-          implementation: openstack.nova_plugin.server.freeze_suspend
-          inputs: {}
-        resume:
-          implementation: openstack.nova_plugin.server.freeze_resume
-          inputs: {}
-      # backups related section
-      cloudify.interfaces.snapshot:
-        create:
-          implementation: openstack.nova_plugin.server.snapshot_create
-          inputs: {}
-        apply:
-          implementation: openstack.nova_plugin.server.snapshot_apply
-          inputs: {}
-        delete:
-          implementation: openstack.nova_plugin.server.snapshot_delete
-          inputs: {}
       cloudify.interfaces.validation:
         creation:
           implementation: openstack.nova_plugin.server.creation_validation
@@ -955,17 +936,6 @@ node_types:
             resource_id:
               type: string
               default: { get_property: [ SELF, resource_id ] }
-      # backups related section
-      cloudify.interfaces.snapshot:
-        create:
-          implementation: openstack.cinder_plugin.volume.snapshot_create
-          inputs: {}
-        apply:
-          implementation: openstack.cinder_plugin.volume.snapshot_apply
-          inputs: {}
-        delete:
-          implementation: openstack.cinder_plugin.volume.snapshot_delete
-          inputs: {}
       cloudify.interfaces.validation:
         creation:
           implementation: openstack.cinder_plugin.volume.creation_validation
